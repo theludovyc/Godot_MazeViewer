@@ -23,6 +23,9 @@ var maxPathLength=int(0.5*mapW*mapH)
 
 var exs=[]
 
+var startPos=Vector2(0, 0)
+var endPos=Vector2(0, 0)
+
 class Room:
 	var dW=false
 	var dS=false
@@ -41,6 +44,7 @@ func mazeInit():
 	posY=helper.rand_between(0, mapH-1)
 
 	exs[0]=Vector2(posX, posY)
+	startPos=Vector2(posX, posY)
 
 	var dR=DataRoom.new()
 
@@ -82,6 +86,8 @@ func genPath():
 			dR.id=3
 			dR.wL.modulate=Color(1, 0, 0, 1)
 
+			endPos=Vector2(posX, posY)
+
 			posX=0
 			posY=0
 
@@ -122,6 +128,8 @@ func genPath():
 	if pathLength>=minPathLength:
 		dR.id=3
 		dR.wL.modulate=Color(1, 0, 0, 1)
+
+		endPos=Vector2(posX, posY)
 
 		genState=1
 	else:
@@ -295,6 +303,19 @@ func clean():
 			if dR.id!=3:
 				dR.wL.queue_free()
 				maze.nullCase(posX, posY)
+
+	var dR=maze.getCase(endPos.x, endPos.y)
+	if dR.room.dW and maze.isNull(endPos.x-1, endPos.y):
+		dR.room.dW=false
+		dR.wL.get_child(0).queue_free()
+
+	if dR.room.dS and maze.isNull(endPos.x, endPos.y-1):
+		dR.room.dS=false
+		if dR.wL.get_child_count()>1:
+			dR.wL.get_child(1).queue_free()
+		else:
+			dR.wL.get_child(0).queue_free()
+
 	$Timer.stop()
 
 func genMaze():
@@ -302,7 +323,6 @@ func genMaze():
 		0:
 			genPath()
 		1:
-			print("state 1")
 			if maze.isNull(0, 0):
 				var dR=DataRoom.new()
 
@@ -315,10 +335,8 @@ func genMaze():
 			posY=0
 
 			genState=2
-			print("state 2")
 		2:
 			genOtherX()
-
 		3:
 			genOtherY()
 		4:
